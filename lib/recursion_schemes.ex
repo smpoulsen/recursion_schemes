@@ -5,28 +5,29 @@ defmodule RecursionSchemes do
   alias RecStruct, as: RS
 
   @doc """
-  cata is a catamorphism, a generalization of fold.
+  cata (catamorphism), is a generalization of fold.
+  When operating on lists, it is equivalent to List.foldr/3
 
   ## Examples
 
       iex> [3, 5, 2, 9]
       ...> |> RecursionSchemes.cata(
-      ...>      fn ([]) -> 0 end,
+      ...>      0,
       ...>      fn (h, acc) -> h + acc end)
       19
 
       iex> 5
       ...> |> RecursionSchemes.cata(
-      ...>      fn (0) -> 1 end,
+      ...>      1,
       ...>      fn (n, acc) -> n * acc end)
       120
   """
-  def cata(data, f_base, f_rec) do
-    {elem, rest} = RS.unwrap(data)
+  def cata(data, acc, f_rec) do
     if RS.base?(data) do
-      f_base.(elem)
+      acc
     else
-      f_rec.(elem, cata(rest, f_base, f_rec))
+      {elem, rest} = RS.unwrap(data)
+      f_rec.(elem, cata(rest, acc, f_rec))
     end
   end
 
@@ -36,51 +37,22 @@ defmodule RecursionSchemes do
   ## Examples
 
       iex> my_sum = RecursionSchemes.cata(
-      ...>   fn ([]) -> 0 end,
+      ...>   0,
       ...>   fn (h, acc) -> h + acc end)
       ...> my_sum.([3, 5, 2, 9])
       19
 
       iex> factorial = RecursionSchemes.cata(
-      ...>   fn (0) -> 1 end,
+      ...>   1,
       ...>   fn (n, acc) -> n * acc end)
       ...> factorial.(5)
       120
   """
-  def cata(f_base, f_rec) when is_function(f_base) and is_function(f_rec) do
+  def cata(acc, f_rec) when is_function(f_rec) do
     fn data ->
-      cata(data, f_base, f_rec)
+      cata(data, acc, f_rec)
     end
   end
-
-  @doc """
-  cata/2 in which instead of passing two functions for the base case and the
-  recursive case, a single function is passed in that must include function
-  heads for both cases.
-
-  ## Examples
-
-      iex> [3,5,2,9]
-      ...> |> RecursionSchemes.cata(
-      ...>      fn ([], _acc) -> 0;
-      ...>         (h, acc) -> h + acc end)
-      19
-
-      iex> 5
-      ...> |> RecursionSchemes.cata(
-      ...>      fn (0, _acc) -> 1;
-      ...>         (n, acc) -> n * acc end)
-      120
-  """
-  def cata(data, f) do
-    {elem, rest} = RS.unwrap(data)
-    if RS.base?(data) do
-      f.(elem, elem)
-    else
-      f.(elem, cata(rest, f))
-    end
-  end
-
 
   @doc """
   ana generalizes unfolding a recursive structure.
@@ -131,7 +103,7 @@ defmodule RecursionSchemes do
   end
 
   @doc """
-  hylo generalizes unfolding a recursive structure and applying a catamorphism
+  hylo/5 generalizes unfolding a recursive structure and applying a catamorphism
   to the result.
 
   Not guaranteed to terminate; unfolding ends when the finished?
@@ -143,17 +115,18 @@ defmodule RecursionSchemes do
       ...>   {1, []}, # Initial state; starting value and accumulator
       ...>   fn x -> x > 5 end, # End unfolding after five iterations
       ...>   fn x -> {x * x, x + 1} end,
-      ...>   fn ([]) -> 0 end,
+      ...>   0,
       ...>   fn (h, acc) -> h + acc end)
       55
   """
-  def hylo({_v, _acc} = state, finished?, unspool_f, f_base, f_rec) do
-    ana(state, finished?, unspool_f)
-    |> cata(f_base, f_rec)
+  def hylo({_v, _acc} = state, finished?, unspool_f, acc, f_rec) do
+    state
+    |> ana(finished?, unspool_f)
+    |> cata(acc, f_rec)
   end
 
   @doc """
-  hylo generalizes unfolding a recursive structure and applying a catamorphism
+  hylo/2 generalizes unfolding a recursive structure and applying a catamorphism
   to the result.
 
   Not guaranteed to terminate; unfolding ends when the finished?
@@ -165,7 +138,7 @@ defmodule RecursionSchemes do
   ...>   fn x -> x > 5 end, # End unfolding after five iterations
   ...>   fn x -> {x * x, x + 1} end)
   ...> my_sum = RecursionSchemes.cata(
-  ...>   fn ([]) -> 0 end,
+  ...>   0,
   ...>   fn (h, acc) -> h + acc end)
   ...> RecursionSchemes.hylo(five_squares, my_sum).({1, []})
   55

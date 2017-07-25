@@ -32,14 +32,6 @@ defprotocol RecStruct do
 end
 
 defimpl RecStruct, for: List do
-  @doc """
-  Given a list, the lists head is the first value.
-
-  ## Example
-
-      iex> RecStruct.unwrap([1,2,3])
-      {1, [2,3]}
-  """
   def unwrap([]), do: {[], nil}
   def unwrap([h | t]), do: {h, t}
 
