@@ -18,6 +18,7 @@ defmodule RecursionSchemes.Mixfile do
 
   def description() do
     """
+    Recursion schemes are functions for creating and consuming recursive data structures.
     """
   end
 

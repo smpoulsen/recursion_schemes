@@ -2,7 +2,7 @@
 
   An Elixir implementation of generic recursion schemes; functions for building and consuming recursively defined data structures.
 
-  See [[http://axiom-wiki.newsynthesis.org/public/refs/Meijer-db-utwente-40501F46.pdf][Functional Programming with Bananas Lenses Envelopes and Barbed Wire]] for the original paper describing recursion schemes.
+  See [[http://axiom-wiki.newsynthesis.org/public/refs/Meijer-db-utwente-40501F46.pdf][Functional Programming with Bananas Lenses Envelopes and Barbed Wire]] for the seminal paper describing recursion schemes.
 
   The current implementation includes [[https://en.wikipedia.org/wiki/Catamorphism][catamorphism]], [[https://en.wikipedia.org/wiki/Anamorphism][anamorphism]], and [[https://en.wikipedia.org/wiki/Hylomorphism_(computer_science)][hylomorphism]]. These functions are for (respectively) consuming, creating, and creating then consuming data structures.
 

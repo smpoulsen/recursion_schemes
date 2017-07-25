@@ -9,7 +9,7 @@ defmodule RecursionSchemes do
   is an implementation of the RecStruct protocol.
 
   See [Functional Programming with Bananas Lenses Envelopes and Barbed Wire](http://axiom-wiki.newsynthesis.org/public/refs/Meijer-db-utwente-40501F46.pdf)
-  for the original paper describing recursion schemes.
+  for the seminal paper describing recursion schemes.
   """
   alias RecStruct, as: RS
 
