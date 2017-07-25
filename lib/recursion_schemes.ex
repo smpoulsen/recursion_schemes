@@ -2,29 +2,31 @@ defmodule RecursionSchemes do
   @moduledoc """
   Documentation for RecursionSchemes.
   """
+  alias RecStruct, as: RS
 
   @doc """
   cata is a catamorphism, a generalization of fold.
 
   ## Examples
 
-      iex> RecursionSchemes.cata(
-      ...>   [3, 5, 2, 9],
-      ...>   fn ([]) -> 0 end,
-      ...>   fn (h, acc) -> h + acc end)
+      iex> [3, 5, 2, 9]
+      ...> |> RecursionSchemes.cata(
+      ...>      fn ([]) -> 0 end,
+      ...>      fn (h, acc) -> h + acc end)
       19
 
-      iex> RecursionSchemes.cata(
-      ...>   5,
-      ...>   fn (0) -> 1 end,
-      ...>   fn (n, acc) -> n * acc end)
+      iex> 5
+      ...> |> RecursionSchemes.cata(
+      ...>      fn (0) -> 1 end,
+      ...>      fn (n, acc) -> n * acc end)
       120
   """
   def cata(data, f_base, f_rec) do
-    if Fix.base?(data) do
-      f_base.(Fix.unwrap(data))
+    {elem, rest} = RS.unwrap(data)
+    if RS.base?(data) do
+      f_base.(elem)
     else
-      f_rec.(Fix.unwrap(data), cata(Fix.wrap(data), f_base, f_rec))
+      f_rec.(elem, cata(rest, f_base, f_rec))
     end
   end
 
@@ -36,7 +38,7 @@ defmodule RecursionSchemes do
       iex> my_sum = RecursionSchemes.cata(
       ...>   fn ([]) -> 0 end,
       ...>   fn (h, acc) -> h + acc end)
-      ...>   my_sum.([3, 5, 2, 9])
+      ...> my_sum.([3, 5, 2, 9])
       19
 
       iex> factorial = RecursionSchemes.cata(
@@ -45,38 +47,68 @@ defmodule RecursionSchemes do
       ...> factorial.(5)
       120
   """
-  def cata(f_base, f_rec) do
+  def cata(f_base, f_rec) when is_function(f_base) and is_function(f_rec) do
     fn data ->
       cata(data, f_base, f_rec)
     end
   end
 
   @doc """
+  cata/2 in which instead of passing two functions for the base case and the
+  recursive case, a single function is passed in that must include function
+  heads for both cases.
+
+  ## Examples
+
+      iex> [3,5,2,9]
+      ...> |> RecursionSchemes.cata(
+      ...>      fn ([], _acc) -> 0;
+      ...>         (h, acc) -> h + acc end)
+      19
+
+      iex> 5
+      ...> |> RecursionSchemes.cata(
+      ...>      fn (0, _acc) -> 1;
+      ...>         (n, acc) -> n * acc end)
+      120
+  """
+  def cata(data, f) do
+    {elem, rest} = RS.unwrap(data)
+    if RS.base?(data) do
+      f.(elem, elem)
+    else
+      f.(elem, cata(rest, f))
+    end
+  end
+
+
+  @doc """
   ana generalizes unfolding a recursive structure.
 
-  Not guaranteed to terminate; unfolding ends when the finished_f
+  Not guaranteed to terminate; unfolding ends when the finished?
   predicate returns true.
 
   ## Examples
 
       iex> RecursionSchemes.ana(
       ...>   {1, []}, # Initial state; starting value and accumulator
-      ...>   fn {x, _a} -> x > 5 end, # End unfolding after five iterations
-      ...>   fn ({x, a}) -> {x + 1, a ++ [x * x]} end)
+      ...>   fn x -> x > 5 end, # End unfolding after five iterations
+      ...>   fn x -> {x * x, x + 1} end)
       [1, 4, 9, 16, 25]
 
       iex> RecursionSchemes.ana(
       ...>    {1, 0},
-      ...>    fn {x, _a} -> x == 16 end,
-      ...>    fn ({x, a}) -> {x + 1, x + a} end)
+      ...>    fn x -> x == 16 end,
+      ...>    fn x -> {x, x + 1} end)
       120
   """
-  def ana({_v, acc} = state, finished_f, unspool_f) do
-    if finished_f.(state) do
-      acc
+  def ana({elem, acc}, finished?, unspool_f), do: ana(elem, finished?, unspool_f, acc)
+  def ana(state, finished?, unspool_f, init_acc) do
+    {elem, next_elem} = unspool_f.(state)
+    if finished?.(next_elem) do
+      RS.wrap(init_acc, elem)
     else
-      new_state = unspool_f.(state)
-      ana(new_state, finished_f, unspool_f)
+      RS.wrap(ana(next_elem, finished?, unspool_f, init_acc), elem)
     end
   end
 
@@ -86,15 +118,15 @@ defmodule RecursionSchemes do
 
   ## Examples
 
-  iex> zip = RecursionSchemes.ana(
-  ...>   fn {{as, bs}, acc} -> as == [] || bs == [] end,
-  ...>   fn {{[a | as], [b | bs]}, acc} -> {{as, bs}, acc ++ [{a, b}]} end)
-  ...> zip.({{[1,2,3,4], ["a", "b", "c"]}, []})
-  [{1, "a"}, {2, "b"}, {3, "c"}]
+      iex> zip = RecursionSchemes.ana(
+      ...>   fn {as, bs} -> as == [] || bs == [] end,
+      ...>   fn {[a | as], [b | bs]} -> {{a, b}, {as, bs}} end)
+      ...> zip.({{[1,2,3,4], ["a", "b", "c"]}, []})
+      [{1, "a"}, {2, "b"}, {3, "c"}]
   """
-  def ana(finished_pred, unspool_f) do
+  def ana(finished?, unspool_f) do
     fn state ->
-      ana(state, finished_pred, unspool_f)
+      ana(state, finished?, unspool_f)
     end
   end
 
@@ -102,40 +134,36 @@ defmodule RecursionSchemes do
   hylo generalizes unfolding a recursive structure and applying a catamorphism
   to the result.
 
-  Not guaranteed to terminate; unfolding ends when the finished_f
+  Not guaranteed to terminate; unfolding ends when the finished?
   predicate returns true.
 
   ## Examples
 
       iex> RecursionSchemes.hylo(
       ...>   {1, []}, # Initial state; starting value and accumulator
-      ...>   fn {x, _a} -> x > 5 end, # End unfolding after five iterations
-      ...>   fn ({x, a}) -> {x + 1, a ++ [x * x]} end,
+      ...>   fn x -> x > 5 end, # End unfolding after five iterations
+      ...>   fn x -> {x * x, x + 1} end,
       ...>   fn ([]) -> 0 end,
       ...>   fn (h, acc) -> h + acc end)
       55
   """
-  def hylo({_v, acc} = state, finished?, unspool_f, f_base, f_rec) do
-    if finished?.(state) do
-      cata(acc, f_base, f_rec)
-    else
-      new_state = unspool_f.(state)
-      hylo(new_state, finished?, unspool_f, f_base, f_rec)
-    end
+  def hylo({_v, _acc} = state, finished?, unspool_f, f_base, f_rec) do
+    ana(state, finished?, unspool_f)
+    |> cata(f_base, f_rec)
   end
 
   @doc """
   hylo generalizes unfolding a recursive structure and applying a catamorphism
   to the result.
 
-  Not guaranteed to terminate; unfolding ends when the finished_f
+  Not guaranteed to terminate; unfolding ends when the finished?
   predicate returns true.
 
   ## Examples
 
   iex> five_squares = RecursionSchemes.ana(
-  ...>   fn {x, _a} -> x > 5 end, # End unfolding after five iterations
-  ...>   fn ({x, a}) -> {x + 1, a ++ [x * x]} end)
+  ...>   fn x -> x > 5 end, # End unfolding after five iterations
+  ...>   fn x -> {x * x, x + 1} end)
   ...> my_sum = RecursionSchemes.cata(
   ...>   fn ([]) -> 0 end,
   ...>   fn (h, acc) -> h + acc end)
