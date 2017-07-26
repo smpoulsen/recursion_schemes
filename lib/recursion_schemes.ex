@@ -180,4 +180,44 @@ defmodule RecursionSchemes do
       catamorphism.(anamorphism.(data))
     end
   end
+
+  @doc """
+  `para/3` or paramorphisim is similar to catamorphism; the major difference
+  is that the recursion function receives the current piece of data, the remaining
+  data, and the accumulator as its arguments (contrast with the current piece of
+  data and the accumulator in catamorphism).
+
+  ## Examples
+
+      iex> RecursionSchemes.para(
+      ...>   [1, 2, 3, 4, 5],
+      ...>   [],
+      ...>   fn (_x, xs, acc) -> [xs | acc] end)
+      [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
+  """
+  def para(data, acc, f) do
+    if RS.base?(data) do
+      acc
+    else
+      {elem, rest} = RS.unwrap(data)
+      f.(elem, rest, para(rest, acc, f))
+    end
+  end
+
+  @doc """
+  `para/2` is a closure over `para/3` with the accumulator and function applied.
+
+  ## Examples
+
+  iex> suffixes = RecursionSchemes.para(
+  ...>   [],
+  ...>   fn (_x, xs, acc) -> [xs | acc] end)
+  ...> suffixes.([1, 2, 3, 4, 5])
+  [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
+  """
+  def para(acc, f) do
+    fn data ->
+      para(data, acc, f)
+    end
+  end
 end
