@@ -15,7 +15,7 @@ Add `recursion_schemes` to your list of dependencies in `mix.exs`:
 
 #+BEGIN_SRC elixir
 def deps do
-  [{:recursion_schemes, "~> 0.1.0"}]
+  [{:recursion_schemes, "~> 0.2.0"}]
 end
 #+END_SRC
 

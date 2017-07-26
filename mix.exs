@@ -3,8 +3,8 @@ defmodule RecursionSchemes.Mixfile do
 
   def project do
     [app: :recursion_schemes,
-     version: "0.1.0",
-     elixir: "~> 1.4",
+     version: "0.2.0",
+     elixir: ">= 1.4.0",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      description: description(),

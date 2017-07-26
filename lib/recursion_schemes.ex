@@ -180,4 +180,107 @@ defmodule RecursionSchemes do
       catamorphism.(anamorphism.(data))
     end
   end
+
+  @doc """
+  `para/3` or paramorphisim is similar to catamorphism; the major difference
+  is that the recursion function receives the current piece of data, the remaining
+  data, and the accumulator as its arguments (contrast with the current piece of
+  data and the accumulator in catamorphism).
+
+  ## Examples
+
+      iex> RecursionSchemes.para(
+      ...>   [1, 2, 3, 4, 5],
+      ...>   [],
+      ...>   fn (_x, xs, acc) -> [xs | acc] end)
+      [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
+  """
+  @spec para(any(), any(), ((any(), any(), any()) -> any())) :: any()
+  def para(data, acc, f) do
+    if RS.base?(data) do
+      acc
+    else
+      {elem, rest} = RS.unwrap(data)
+      f.(elem, rest, para(rest, acc, f))
+    end
+  end
+
+  @doc """
+  `para/2` is a closure over `para/3` with the accumulator and function applied.
+
+  ## Examples
+
+  iex> suffixes = RecursionSchemes.para(
+  ...>   [],
+  ...>   fn (_x, xs, acc) -> [xs | acc] end)
+  ...> suffixes.([1, 2, 3, 4, 5])
+  [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
+  """
+  @spec para(any(), ((any(), any(), any()) -> any())) :: (any() -> any())
+  def para(acc, f) do
+    fn data ->
+      para(data, acc, f)
+    end
+  end
+
+  @doc """
+  `apo/2` (apomorphism) is an unfolding function similar to `ana/3` and dual to `para/3`.
+  It takes a `{seed, accumulator}` tuple and an unspooling function.
+
+  Instead of supplying a `finished?` predicate, the unspooling function must return two
+  possible cases - an `{:ok, value}` tuple and a `{:halt, value}` tuple. When the return
+  value is the `:halt` tuple, the unfolding will end.
+
+  If a `{:halt, _}` tuple is never returned, the function will not terminate.
+
+  ## Examples
+
+      iex> RecursionSchemes.apo(
+      ...>   {1, []}, # Initial state; starting value and accumulator
+      ...>   fn 5 = x -> {{:halt, x * x}, x + 1};
+      ...>          x -> {{:ok, x * x}, x + 1} end)
+      [1, 4, 9, 16, 25]
+
+      iex> RecursionSchemes.apo(
+      ...>    {1, 0},
+      ...>    fn 15 = x -> {{:halt, x}, x + 1};
+      ...>            x -> {{:ok, x}, x + 1} end)
+      120
+  """
+  @spec apo({any(), any()}, (any() -> any())) :: any()
+  def apo({seed, acc} = _init_state, unspool_f), do: apo_helper(seed, unspool_f, acc)
+  defp apo_helper(state, unspool_f, init_acc) do
+    {elem, next_elem} = unspool_f.(state)
+    case elem do
+      {:halt, val} ->
+        RS.wrap(init_acc, val)
+      {:ok, val} ->
+        RS.wrap(apo_helper(next_elem, unspool_f, init_acc), val)
+      {_, _} ->
+        {:error, {:recursion_schemes, :bad_return_value}}
+    end
+  end
+
+  @doc """
+  `apo/1` is a closure over `apo/2` that applies the unspooling function.
+
+  ## Examples
+
+      iex> zip = RecursionSchemes.apo(
+      ...>   fn {[a | as], [b | bs]} ->
+      ...>     if as == [] or bs == [] do
+      ...>       {{:halt, {a, b}}, nil}
+      ...>     else
+      ...>       {{:ok, {a, b}}, {as, bs}}
+      ...>     end
+      ...>   end)
+      ...> zip.({{[1,2,3,4], ["a", "b", "c"]}, []})
+      [{1, "a"}, {2, "b"}, {3, "c"}]
+  """
+  @spec apo((any() -> any())) :: (any() -> any())
+  def apo(unspool_f) when is_function(unspool_f) do
+    fn data ->
+      apo(data, unspool_f)
+    end
+  end
 end
