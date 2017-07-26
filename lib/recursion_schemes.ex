@@ -237,7 +237,7 @@ defmodule RecursionSchemes do
 
       iex> RecursionSchemes.apo(
       ...>   {1, []}, # Initial state; starting value and accumulator
-      ...>   fn 5 = x -> {{:halt, x * x}, x + 1};
+      ...>   fn 5 = x -> {{:halt, x * x}, nil};
       ...>          x -> {{:ok, x * x}, x + 1} end)
       [1, 4, 9, 16, 25]
 

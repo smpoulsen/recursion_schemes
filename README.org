@@ -8,6 +8,74 @@
 
   /Note:/ This library is in development and the API is subject to change.
 
+** Examples
+   =cata/3= folds a structure (it is functionally equivalent to =foldr= for lists):
+    #+BEGIN_SRC elixir
+      [3, 5, 2, 9]
+      |> RecursionSchemes.cata(
+          0,
+          fn (h, acc) -> h + acc end)
+      # 19
+
+      # Calculate the factorial of a number:
+      RecursionSchemes.cata(
+        5,
+        1,
+        fn (x, acc) -> x * acc  end
+      )
+      # 120
+    #+END_SRC
+
+    =ana/3= unfolds a seed value using a function to generate new values:
+    #+BEGIN_SRC elixir
+      # Generate a list of the squares of 1 - 10.
+      RecursionSchemes.ana(
+        {1, []},
+        fn x -> x > 10 end,
+        fn x -> {x * x, x + 1} end
+      )
+      # [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+    #+END_SRC
+
+    =hylo/5= unfolds a data structure from a seed and then folds the result:
+    #+BEGIN_SRC elixir
+      # Generate a list of the squares from 1 - 10, then sum the result.
+      RecursionSchemes.hylo(
+        {1, []},
+        fn x -> x > 10 end,
+        fn x -> {x * x, x + 1} end
+        0,
+        fn (n, acc) -> n + acc end
+      )
+      # 385
+    #+END_SRC
+
+    =para/3= folds a structure; it differs from =cata= in that the folding function receives as arguments the current value, the remaining values in the structure, and the accumulator:
+    #+BEGIN_SRC elixir
+      # Generate a list of the suffixes of a list:
+      RecursionSchemes.para(
+        [1, 2, 3, 4, 5],
+        [],
+        fn (_x, xs, acc) -> [xs | acc] end
+      )
+      # [[2, 3, 4, 5], [3, 4, 5], [4, 5], [5], []]
+    #+END_SRC
+
+    =apo/2= unfolds a structure from a seed as long as the unfolding function returns ={:ok, value}=; unfolding stops when ={:halt, value}= is returned:
+    #+BEGIN_SRC elixir
+      # Zip a pair of lists:
+      {{[1,2,3,4], ["a", "b", "c"]}, []}
+      |> RecursionSchemes.apo(
+          fn {[a | as], [b | bs]} ->
+            if as == [] or bs == [] do
+              {{:halt, {a, b}}, nil}
+            else
+              {{:ok, {a, b}}, {as, bs}}
+            end
+          end)
+      # [{1, "a"}, {2, "b"}, {3, "c"}]
+    #+END_SRC
+
 ** Functionality
 *** Folds (consuming)
     + [[https://en.wikipedia.org/wiki/Catamorphism][catamorphism]]
