@@ -21,8 +21,8 @@
       + =ana/3=
       + =ana/2=
     + [[https://en.wikipedia.org/wiki/Apomorphism][apomorphism]]
-      + =apo/3=
       + =apo/2=
+      + =apo/1=
 *** Refolds (generating + consuming)
     + [[https://en.wikipedia.org/wiki/Hylomorphism_(computer_science)][hylomorphism]]
       + =hylo/5=
