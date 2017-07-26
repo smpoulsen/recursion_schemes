@@ -4,11 +4,29 @@
 
   See [[http://axiom-wiki.newsynthesis.org/public/refs/Meijer-db-utwente-40501F46.pdf][Functional Programming with Bananas Lenses Envelopes and Barbed Wire]] for the seminal paper describing recursion schemes.
 
-  The current implementation includes [[https://en.wikipedia.org/wiki/Catamorphism][catamorphism]], [[https://en.wikipedia.org/wiki/Anamorphism][anamorphism]], and [[https://en.wikipedia.org/wiki/Hylomorphism_(computer_science)][hylomorphism]]. These functions are for (respectively) consuming, creating, and creating then consuming data structures.
-
   Up-to-date docs can be found via [[https://hexdocs.pm/recursion_schemes][hexdocs.pm/recursion_schemes]].
 
   /Note:/ This library is in development and the API is subject to change.
+
+** Functionality
+*** Folds (consuming)
+    + [[https://en.wikipedia.org/wiki/Catamorphism][catamorphism]]
+      + =cata/3=
+      + =cata/2=
+    + [[https://en.wikipedia.org/wiki/Paramorphism][paramorphism]]
+      + =para/3=
+      + =para/2=
+*** Unfolds (generating)
+    + [[https://en.wikipedia.org/wiki/Anamorphism][anamorphism]]
+      + =ana/3=
+      + =ana/2=
+    + [[https://en.wikipedia.org/wiki/Apomorphism][apomorphism]]
+      + =apo/3=
+      + =apo/2=
+*** Refolds (generating + consuming)
+    + [[https://en.wikipedia.org/wiki/Hylomorphism_(computer_science)][hylomorphism]]
+      + =hylo/5=
+      + =hylo/2=
 
 ** Installation
 Add `recursion_schemes` to your list of dependencies in `mix.exs`:
