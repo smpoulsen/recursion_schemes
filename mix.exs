@@ -36,9 +36,9 @@ defmodule RecursionSchemes.Mixfile do
     [
       name: :recursion_schemes,
       licenses: ["BSD2"],
-      maintainers: ["Travis Poulsen"],
+      maintainers: ["Sylvie Poulsen"],
       links: %{
-        "GitHub" => "https://github.com/tpoulsen/recursion_schemes",
+        "GitHub" => "https://github.com/smpoulsen/recursion_schemes",
       }
     ]
   end
